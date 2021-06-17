@@ -1,3 +1,6 @@
+from train import train_model
+
+
 def main():
     from train import train_model
     train_model()
