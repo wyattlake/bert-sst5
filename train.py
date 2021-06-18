@@ -71,15 +71,17 @@ def eval_epoch(batch_size, dataset):
 def train_model(num_epochs=30, batch_size=32, save=True):
     for epoch in range(1, num_epochs + 1):
         print(f"STARTING EPOCH {epoch}")
-        train_loss, train_acc = train_epoch(
-            batch_size=batch_size, dataset=train_dataset)
-        eval_loss, eval_acc = eval_epoch(
-            batch_size=batch_size, dataset=eval_dataset)
+        # train_loss, train_acc = train_epoch(
+        #     batch_size=batch_size, dataset=train_dataset)
+        # eval_loss, eval_acc = eval_epoch(
+        #     batch_size=batch_size, dataset=eval_dataset)
+        train_loss, train_acc, eval_loss, eval_acc = 0.0, 0.0, 0.0, 0.0
         test_loss, test_acc = eval_epoch(
             batch_size=batch_size, dataset=test_dataset)
         print(
-            f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}")
+            f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}\n")
         if save:
-            with open(f'results/results_{checkpoint}_{num_epochs}_epochs.txt', 'a') as f:
-                f.write(f"\nFINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}")
-            torch.save(model, f'models/{checkpoint}/epoch_{epoch}.pt')
+            with open(f'results/results_{checkpoint}_{num_epochs}_epochs.txt', 'a+') as f:
+                f.write(f"\nFINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}\n")
+            with open(f'models/{checkpoint}/epoch_{epoch}.pt', 'w+') as f:
+                torch.save(model, f'models/{checkpoint}/epoch_{epoch}.pt')
