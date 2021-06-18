@@ -75,7 +75,7 @@ def train_model(num_epochs=30, batch_size=32, save=True):
             batch_size=batch_size, dataset=train_dataset)
         eval_loss, eval_acc = eval_epoch(
             batch_size=batch_size, dataset=eval_dataset)
-        eval_loss, eval_acc = eval_epoch(
+        test_loss, test_acc = eval_epoch(
             batch_size=batch_size, dataset=test_dataset)
         print(
             f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}")
