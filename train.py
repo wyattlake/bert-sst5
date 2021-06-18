@@ -23,7 +23,7 @@ model.to(device)
 # Dataset loading
 full_dataset = load_dataset("sst", "default")
 train_dataset = SSTDataset(full_dataset, device, split="train")
-eval_dataset = SSTDataset(full_dataset, device, split="evaluate")
+eval_dataset = SSTDataset(full_dataset, device, split="validation")
 test_dataset = SSTDataset(full_dataset, device, split="test")
 
 
@@ -81,5 +81,5 @@ def train_model(num_epochs=30, batch_size=32, save=True):
             f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}")
         if save:
             with open(f'results/results_{checkpoint}_{num_epochs}_epochs.txt', 'a') as f:
-                f.write("\nFINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}")
+                f.write(f"\nFINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}")
             torch.save(model, f'models/{checkpoint}/epoch_{epoch}.pt')
