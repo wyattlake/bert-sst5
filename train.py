@@ -71,11 +71,10 @@ def eval_epoch(batch_size, dataset):
 def train_model(num_epochs=30, batch_size=32, save=True):
     for epoch in range(1, num_epochs + 1):
         print(f"STARTING EPOCH {epoch}")
-        # train_loss, train_acc = train_epoch(
-        #     batch_size=batch_size, dataset=train_dataset)
-        # eval_loss, eval_acc = eval_epoch(
-        #     batch_size=batch_size, dataset=eval_dataset)
-        train_loss, train_acc, eval_loss, eval_acc = 0.0, 0.0, 0.0, 0.0
+        train_loss, train_acc = train_epoch(
+            batch_size=batch_size, dataset=train_dataset)
+        eval_loss, eval_acc = eval_epoch(
+            batch_size=batch_size, dataset=eval_dataset)
         test_loss, test_acc = eval_epoch(
             batch_size=batch_size, dataset=test_dataset)
         print(
