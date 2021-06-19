@@ -34,6 +34,7 @@ def train_epoch(batch_size, dataset):
     model.train()
     train_loss, train_acc = 0.0, 0.0
     for batch, labels in tqdm(train_dataloader):
+        optimizer.zero_grad()
         batch, labels = batch.to(device), labels.to(device)
         logits = model(batch).logits
         loss = lossfn(logits, labels.long())
@@ -75,12 +76,11 @@ def train_model(num_epochs=30, batch_size=32, save=True):
             batch_size=batch_size, dataset=train_dataset)
         eval_loss, eval_acc = eval_epoch(
             batch_size=batch_size, dataset=eval_dataset)
-        test_loss, test_acc = eval_epoch(
-            batch_size=batch_size, dataset=test_dataset)
         print(
-            f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}\n")
+            f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\n")
         if save:
             with open(f'results/results_{checkpoint}_{num_epochs}_epochs.txt', 'a+') as f:
-                f.write(f"\nFINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n\nTesting\nLoss: {test_loss:.4f}\nAccuracy: {test_acc:.4f}\n")
+                f.write(
+                    f"\nFINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n")
             with open(f'models/{checkpoint}/epoch_{epoch}.pt', 'w+') as f:
                 torch.save(model, f'models/{checkpoint}/epoch_{epoch}.pt')
