@@ -1,9 +1,15 @@
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from dotenv import load_dotenv
 from data import SSTDataset
 import neptune.new as neptune
 from tqdm import tqdm
 import torch
+import os
+
+# .env variables
+load_dotenv()
+NEPTUNE_TOKEN = os.environ.get("NEPTUNE_TOKEN")
 
 # Cuda setup
 device = torch.device(
@@ -30,7 +36,7 @@ test_dataset = SSTDataset(full_dataset, device, split="test")
 
 # Neptune
 run = neptune.init(project='wyattlake/bert-sst5',
-                   api_token='eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwM2E2YmY0Yy02OTgxLTQ0NmQtOTFiMi03NzllNzk3OWM1YzAifQ==')
+                   api_token=NEPTUNE_TOKEN)
 run["parameters"] = {"model": checkpoint, "learning_rate": 1e-5,
                      "optimizer": optimizer, "batch_size": 32, "epochs": 30}
 
@@ -48,15 +54,17 @@ def train_epoch(batch_size, dataset):
     for batch, labels in tqdm(train_dataloader):
         optimizer.zero_grad()
         batch, labels = batch.to(device), labels.to(device)
-        logits = model(batch).logits
+        output = model(batch)
+        logits = output[0].squeeze()
         loss = lossfn(logits, labels.long())
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
         pred_labels = torch.argmax(logits, axis=1)
-        train_acc += (pred_labels == labels).sum().item()
-        run["train/loss"].log(loss.item())
-        run["train/acc"].log((pred_labels == labels).sum().item())
+        batch_acc = (pred_labels == labels).sum().item()
+        train_acc += batch_acc
+        run["train/loss"].log(loss.item() / batch_size)
+        run["train/acc"].log(batch_acc / batch_size)
 
     train_loss /= len(dataset)
     train_acc /= len(dataset)
@@ -64,15 +72,16 @@ def train_epoch(batch_size, dataset):
 
 
 def eval_epoch(batch_size, dataset):
-    train_dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=True,
+    eval_dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size, shuffle=False,
     )
     model.eval()
     eval_loss, eval_acc = 0.0, 0.0
     with torch.no_grad():
-        for batch, labels in tqdm(train_dataloader):
+        for batch, labels in tqdm(eval_dataloader):
             batch, labels = batch.to(device), labels.to(device)
-            logits = model(batch).logits
+            output = model(batch)
+            logits = output[0].squeeze()
             err = lossfn(logits, labels.long())
             eval_loss += err.item()
             pred_labels = torch.argmax(logits, axis=1)
@@ -83,13 +92,13 @@ def eval_epoch(batch_size, dataset):
     return eval_loss, eval_acc
 
 
-def train_model(num_epochs=30, batch_size=32, save=True):
+def train_model(num_epochs=30, eval_batch_size=42, train_batch_size=32, save=False):
     for epoch in range(1, num_epochs + 1):
         print(f"STARTING EPOCH {epoch}")
         train_loss, train_acc = train_epoch(
-            batch_size=batch_size, dataset=train_dataset)
+            batch_size=train_batch_size, dataset=train_dataset)
         eval_loss, eval_acc = eval_epoch(
-            batch_size=batch_size, dataset=eval_dataset)
+            batch_size=eval_batch_size, dataset=eval_dataset)
         print(
             f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n")
 

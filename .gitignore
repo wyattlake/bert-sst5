@@ -2,3 +2,5 @@
 /models/bert-large-uncased/*
 /results/*
 /.neptune/
+/.vscode/
+.env

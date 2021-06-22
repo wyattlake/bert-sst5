@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 from datasets import load_dataset
 from transformers import AutoTokenizer
+import numpy as np
 import torch
 
 checkpoint = "bert-large-uncased"
@@ -16,7 +17,7 @@ class SSTDataset(Dataset):
             (
                 self.pad([tokenizer.cls_token_id] + tokenizer.encode(item["sentence"]) +
                          [tokenizer.sep_token_id], size=size),
-                item["label"],
+                self.map(item["label"]),
             )
             for item in self.raw_dataset
         ]
@@ -29,6 +30,12 @@ class SSTDataset(Dataset):
         else:
             extra = size - len(text)
             return text + [0] * extra
+
+    def map(self, val):
+        if val == 0:
+            return 0
+        else:
+            return np.ceil(val * 5) - 1
 
     def __len__(self):
         return len(self.dataset)
