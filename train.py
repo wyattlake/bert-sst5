@@ -45,24 +45,33 @@ run["size/val"] = len(eval_dataset)
 run["size/test"] = len(test_dataset)
 
 
-def train_epoch(batch_size, dataset):
+def train_epoch(batch_size, dataset, accumulation_steps=2):
     train_dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=True,
     )
     model.train()
-    train_loss, train_acc = 0.0, 0.0
+    optimizer.zero_grad()
+    train_loss, train_acc, step = 0.0, 0.0, 0
     for batch, labels in tqdm(train_dataloader):
-        optimizer.zero_grad()
         batch, labels = batch.to(device), labels.to(device)
         output = model(batch)
         logits = output[0].squeeze()
         loss = lossfn(logits, labels.long())
         loss.backward()
-        optimizer.step()
+
+        # Calculating loss and accuracy
         train_loss += loss.item()
         pred_labels = torch.argmax(logits, axis=1)
         batch_acc = (pred_labels == labels).sum().item()
         train_acc += batch_acc
+
+        # Gradient accumulation
+        step += 1
+        if step % accumulation_steps == 0:
+            optimizer.step()
+            optimizer.zero_grad()
+
+        # Logging values with Neptune
         run["train/loss"].log(loss.item() / batch_size)
         run["train/acc"].log(batch_acc / batch_size)
 
