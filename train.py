@@ -1,6 +1,7 @@
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from data import SSTDataset
+import neptune.new as neptune
 from tqdm import tqdm
 import torch
 
@@ -25,6 +26,17 @@ full_dataset = load_dataset("sst", "default")
 train_dataset = SSTDataset(full_dataset, device, split="train")
 eval_dataset = SSTDataset(full_dataset, device, split="validation")
 test_dataset = SSTDataset(full_dataset, device, split="test")
+
+
+# Neptune
+run = neptune.init(project='wyattlake/bert-sst5',
+                   api_token='eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwM2E2YmY0Yy02OTgxLTQ0NmQtOTFiMi03NzllNzk3OWM1YzAifQ==')
+run["parameters"] = {"model": checkpoint, "learning_rate": 1e-5,
+                     "optimizer": optimizer, "batch_size": 32, "epochs": 30}
+
+run["size/train"] = len(train_dataset)
+run["size/val"] = len(eval_dataset)
+run["size/test"] = len(test_dataset)
 
 
 def train_epoch(batch_size, dataset):
@@ -77,7 +89,14 @@ def train_model(num_epochs=30, batch_size=32, save=True):
         eval_loss, eval_acc = eval_epoch(
             batch_size=batch_size, dataset=eval_dataset)
         print(
-            f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\n")
+            f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n")
+
+        run["train/loss"].log(train_loss)
+        run["val/loss"].log(eval_loss)
+
+        run["train/acc"].log(train_acc)
+        run["val/acc"].log(eval_acc)
+
         if save:
             with open(f'results/results_{checkpoint}_{num_epochs}_epochs.txt', 'a+') as f:
                 f.write(
