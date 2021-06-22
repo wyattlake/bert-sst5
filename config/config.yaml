@@ -1,0 +1,6 @@
+defaults:
+  - batch: default_batch
+  - lr: constant
+
+checkpoint: "bert-base-uncased"
+epochs: 30

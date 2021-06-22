@@ -3,4 +3,5 @@
 /results/*
 /.neptune/
 /.vscode/
+/outputs/
 .env
