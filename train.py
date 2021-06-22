@@ -10,7 +10,7 @@ device = torch.device(
     "cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 # Model settings
-checkpoint = "bert-large-uncased"
+checkpoint = "bert-base-uncased"
 model = AutoModelForSequenceClassification.from_pretrained(
     checkpoint, num_labels=5)
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
@@ -55,6 +55,8 @@ def train_epoch(batch_size, dataset):
         train_loss += loss.item()
         pred_labels = torch.argmax(logits, axis=1)
         train_acc += (pred_labels == labels).sum().item()
+        run["train/loss"].log(loss.item())
+        run["train/acc"].log((pred_labels == labels).sum().item())
 
     train_loss /= len(dataset)
     train_acc /= len(dataset)
@@ -91,11 +93,11 @@ def train_model(num_epochs=30, batch_size=32, save=True):
         print(
             f"FINISHED EPOCH {epoch}\n\nTraining\nLoss: {train_loss:.4f}\nAccuracy: {train_acc:.4f}\n\nEvaluation\nLoss: {eval_loss:.4f}\nAccuracy: {eval_acc:.4f}\n")
 
-        run["train/loss"].log(train_loss)
-        run["val/loss"].log(eval_loss)
+        run["train_epoch/loss"].log(train_loss)
+        run["val_epoch/loss"].log(eval_loss)
 
-        run["train/acc"].log(train_acc)
-        run["val/acc"].log(eval_acc)
+        run["train_epoch/acc"].log(train_acc)
+        run["val_epoch/acc"].log(eval_acc)
 
         if save:
             with open(f'results/results_{checkpoint}_{num_epochs}_epochs.txt', 'a+') as f:
