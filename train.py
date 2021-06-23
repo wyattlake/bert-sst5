@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification
 from dotenv import load_dotenv
 from data import SSTDataset
 import neptune.new as neptune
@@ -30,7 +30,7 @@ eval_dataset = SSTDataset(full_dataset, device, split="validation")
 test_dataset = SSTDataset(full_dataset, device, split="test")
 
 
-def train_epoch(model, batch_size, dataset, lossfn, optimizer, accumulation_steps=2):
+def train_epoch(model, batch_size, dataset, lossfn, optimizer, accumulation_steps):
     train_dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=True,
     )
@@ -95,13 +95,10 @@ def train_model(cfg, save=False):
     lossfn = torch.nn.CrossEntropyLoss()
     model.to(device)
 
-    if cfg.lr.constant:
-        optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr.rate)
-    else:
-        optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr.rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.learning_rate)
 
     # Neptune parameters
-    run["parameters"] = {"model": cfg.checkpoint, "learning_rate": 1e-5,
+    run["parameters"] = {"model": cfg.checkpoint, "learning_rate": cfg.learning_rate,
                          "optimizer": optimizer, "batch_size": 32, "epochs": cfg.epochs}
 
     run["size/train"] = len(train_dataset)
@@ -111,7 +108,7 @@ def train_model(cfg, save=False):
     for epoch in range(1, cfg.epochs + 1):
         print(f"STARTING EPOCH {epoch}")
         train_loss, train_acc = train_epoch(
-            model, batch_size=cfg.batch.train_size, dataset=train_dataset, lossfn=lossfn, optimizer=optimizer)
+            model, batch_size=cfg.batch.train_size, dataset=train_dataset, lossfn=lossfn, optimizer=optimizer, accumulation_steps=cfg.batch.accumulation_steps)
         eval_loss, eval_acc = eval_epoch(
             model, batch_size=cfg.batch.eval_size, dataset=eval_dataset, lossfn=lossfn)
         print(
